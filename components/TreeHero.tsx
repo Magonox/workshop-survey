@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 type Leaf = {
   cx: number;
@@ -32,56 +32,65 @@ const LEAF_COLORS = [
   "#d84316",
 ];
 
-export function TreeHero({ size = 340 }: { size?: number }) {
-  // Leaf clusters along the crown — positioned as several foliage clouds
-  const leaves = useMemo<Leaf[]>(() => {
-    const r = rng(42);
-    const out: Leaf[] = [];
-    // Crown clusters: [cx, cy, spread, count]
-    const clusters: [number, number, number, number][] = [
-      [180, 75, 48, 50],
-      [220, 95, 42, 42],
-      [145, 95, 42, 42],
-      [195, 50, 38, 32],
-      [120, 70, 30, 22],
-      [240, 65, 28, 20],
-      [170, 115, 30, 22],
-    ];
-    for (const [cx, cy, spread, count] of clusters) {
-      for (let i = 0; i < count; i++) {
-        const a = r() * Math.PI * 2;
-        const d = Math.pow(r(), 0.6) * spread;
-        const lx = cx + Math.cos(a) * d;
-        const ly = cy + Math.sin(a) * d * 0.85;
-        const rx = 2 + r() * 3;
-        const ry = 4 + r() * 4;
-        const rot = r() * 360;
-        const fill = LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)];
-        const opacity = 0.7 + r() * 0.3;
-        const delay = 0.25 + r() * 0.8;
-        out.push({ cx: lx, cy: ly, rx, ry, rot, fill, opacity, delay });
-      }
-    }
-    return out;
-  }, []);
+const n = (v: number) => Number(v.toFixed(3));
 
-  // A handful of falling / drifting leaves
-  const falling = useMemo<Leaf[]>(() => {
-    const r = rng(7);
-    const out: Leaf[] = [];
-    for (let i = 0; i < 14; i++) {
+function buildLeaves(): Leaf[] {
+  const r = rng(42);
+  const out: Leaf[] = [];
+  const clusters: [number, number, number, number][] = [
+    [180, 75, 48, 50],
+    [220, 95, 42, 42],
+    [145, 95, 42, 42],
+    [195, 50, 38, 32],
+    [120, 70, 30, 22],
+    [240, 65, 28, 20],
+    [170, 115, 30, 22],
+  ];
+  for (const [cx, cy, spread, count] of clusters) {
+    for (let i = 0; i < count; i++) {
+      const a = r() * Math.PI * 2;
+      const d = Math.pow(r(), 0.6) * spread;
       out.push({
-        cx: 40 + r() * 220,
-        cy: 180 + r() * 60,
-        rx: 2 + r() * 2,
-        ry: 4 + r() * 2,
-        rot: r() * 360,
+        cx: n(cx + Math.cos(a) * d),
+        cy: n(cy + Math.sin(a) * d * 0.85),
+        rx: n(2 + r() * 3),
+        ry: n(4 + r() * 4),
+        rot: n(r() * 360),
         fill: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)],
-        opacity: 0.55 + r() * 0.35,
-        delay: 0.6 + r() * 1.2,
+        opacity: n(0.7 + r() * 0.3),
+        delay: n(0.25 + r() * 0.8),
       });
     }
-    return out;
+  }
+  return out;
+}
+
+function buildFalling(): Leaf[] {
+  const r = rng(7);
+  const out: Leaf[] = [];
+  for (let i = 0; i < 14; i++) {
+    out.push({
+      cx: n(40 + r() * 220),
+      cy: n(180 + r() * 60),
+      rx: n(2 + r() * 2),
+      ry: n(4 + r() * 2),
+      rot: n(r() * 360),
+      fill: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)],
+      opacity: n(0.55 + r() * 0.35),
+      delay: n(0.6 + r() * 1.2),
+    });
+  }
+  return out;
+}
+
+export function TreeHero({ size = 340 }: { size?: number }) {
+  // Generate leaves on the client only to avoid hydration mismatch
+  // from floating-point serialization differences between SSR and CSR.
+  const [leaves, setLeaves] = useState<Leaf[]>([]);
+  const [falling, setFalling] = useState<Leaf[]>([]);
+  useEffect(() => {
+    setLeaves(buildLeaves());
+    setFalling(buildFalling());
   }, []);
 
   return (
