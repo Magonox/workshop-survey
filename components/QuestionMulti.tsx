@@ -3,14 +3,17 @@
 import { motion } from "framer-motion";
 import type { ChoiceOption } from "@/lib/questions";
 import { QuestionHeader } from "./QuestionChoice";
+import { iconFor } from "@/lib/icons";
 
 export function QuestionMulti({
+  questionId,
   title,
   subtitle,
   options,
   value,
   onChange,
 }: {
+  questionId: string;
   title: string;
   subtitle?: string;
   options: ChoiceOption[];
@@ -28,6 +31,7 @@ export function QuestionMulti({
       <div className="mt-8 flex flex-wrap gap-3">
         {options.map((opt, i) => {
           const selected = value.includes(opt.value);
+          const Icon = iconFor(questionId, opt.value);
           return (
             <motion.button
               key={opt.value}
@@ -44,7 +48,7 @@ export function QuestionMulti({
                   : "border-line bg-white text-ink hover:border-brand/50"
               }`}
             >
-              {opt.emoji && <span aria-hidden>{opt.emoji}</span>}
+              <Icon size={16} strokeWidth={2.25} aria-hidden />
               {opt.label}
             </motion.button>
           );

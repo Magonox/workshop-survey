@@ -1,15 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import type { ChoiceOption } from "@/lib/questions";
+import { iconFor } from "@/lib/icons";
 
 export function QuestionChoice({
+  questionId,
   title,
   subtitle,
   options,
   value,
   onChange,
 }: {
+  questionId: string;
   title: string;
   subtitle?: string;
   options: ChoiceOption[];
@@ -22,6 +26,7 @@ export function QuestionChoice({
       <div className="mt-8 grid gap-3">
         {options.map((opt, i) => {
           const selected = value === opt.value;
+          const Icon = iconFor(questionId, opt.value);
           return (
             <motion.button
               key={opt.value}
@@ -38,13 +43,22 @@ export function QuestionChoice({
                   : "border-line bg-white hover:border-brand/50"
               }`}
             >
-              <div className="flex items-center gap-3">
-                {opt.emoji && (
-                  <span className="text-2xl leading-none" aria-hidden>
-                    {opt.emoji}
-                  </span>
-                )}
-                <span className={`font-medium ${selected ? "text-brand-deep" : "text-ink"}`}>
+              <div className="flex items-center gap-4">
+                <span
+                  className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-colors ${
+                    selected
+                      ? "bg-brand text-white"
+                      : "bg-brand-soft text-brand-deep group-hover:bg-brand/10"
+                  }`}
+                  aria-hidden
+                >
+                  <Icon size={20} strokeWidth={2} />
+                </span>
+                <span
+                  className={`font-medium ${
+                    selected ? "text-brand-deep" : "text-ink"
+                  }`}
+                >
                   {opt.label}
                 </span>
                 {selected && (
@@ -54,7 +68,7 @@ export function QuestionChoice({
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                   >
-                    ✓
+                    <Check size={20} strokeWidth={2.5} />
                   </motion.span>
                 )}
               </div>

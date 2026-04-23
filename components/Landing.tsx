@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { BarChart3 } from "lucide-react";
 import { TreeHero } from "./TreeHero";
 
 export function Landing({ onStart }: { onStart: () => void }) {
@@ -27,15 +29,24 @@ export function Landing({ onStart }: { onStart: () => void }) {
           screen as you submit them — so the room decides together what
           comes next.
         </p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onStart}
-          className="mt-8 inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-brand text-white font-semibold shadow-[0_10px_30px_-10px_rgba(255,107,53,0.6)] hover:bg-brand-deep transition-colors"
-        >
-          Start the survey
-          <span aria-hidden>→</span>
-        </motion.button>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onStart}
+            className="inline-flex items-center gap-2 px-7 py-4 rounded-2xl bg-brand text-white font-semibold shadow-[0_10px_30px_-10px_rgba(255,107,53,0.6)] hover:bg-brand-deep transition-colors"
+          >
+            Start the survey
+            <span aria-hidden>→</span>
+          </motion.button>
+          <Link
+            href="/results"
+            className="inline-flex items-center gap-2 px-5 py-4 rounded-2xl border-2 border-line text-ink font-medium hover:border-brand hover:text-brand-deep transition-colors"
+          >
+            <BarChart3 size={18} strokeWidth={2.25} />
+            View live results
+          </Link>
+        </div>
         <p className="mt-4 text-sm text-muted">
           ~10 questions · your email stays with Shawn, nowhere else
         </p>

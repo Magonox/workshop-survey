@@ -146,7 +146,7 @@ function ChoiceChart({
 
   const data = q.options.map((opt) => ({
     id: opt.value,
-    label: `${opt.emoji ?? ""} ${opt.label}`.trim(),
+    label: opt.label,
     count: agg[opt.value] || 0,
   }));
 

@@ -312,6 +312,7 @@ function renderQuestion(
   if (q.kind === "choice") {
     return (
       <QuestionChoice
+        questionId={q.id}
         title={q.title}
         subtitle={q.subtitle}
         options={q.options}
@@ -323,6 +324,7 @@ function renderQuestion(
   if (q.kind === "multi") {
     return (
       <QuestionMulti
+        questionId={q.id}
         title={q.title}
         subtitle={q.subtitle}
         options={q.options}

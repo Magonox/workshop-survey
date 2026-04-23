@@ -1,83 +1,256 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 
-export function TreeHero({ size = 280 }: { size?: number }) {
+type Leaf = {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  rot: number;
+  fill: string;
+  opacity: number;
+  delay: number;
+};
+
+// Seeded pseudo-random so layout is stable across renders
+function rng(seed: number) {
+  return () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+}
+
+const LEAF_COLORS = [
+  "#ff6b35",
+  "#f85a20",
+  "#ff8351",
+  "#ffa071",
+  "#e84a16",
+  "#ffb993",
+  "#d84316",
+];
+
+export function TreeHero({ size = 340 }: { size?: number }) {
+  // Leaf clusters along the crown — positioned as several foliage clouds
+  const leaves = useMemo<Leaf[]>(() => {
+    const r = rng(42);
+    const out: Leaf[] = [];
+    // Crown clusters: [cx, cy, spread, count]
+    const clusters: [number, number, number, number][] = [
+      [180, 75, 48, 50],
+      [220, 95, 42, 42],
+      [145, 95, 42, 42],
+      [195, 50, 38, 32],
+      [120, 70, 30, 22],
+      [240, 65, 28, 20],
+      [170, 115, 30, 22],
+    ];
+    for (const [cx, cy, spread, count] of clusters) {
+      for (let i = 0; i < count; i++) {
+        const a = r() * Math.PI * 2;
+        const d = Math.pow(r(), 0.6) * spread;
+        const lx = cx + Math.cos(a) * d;
+        const ly = cy + Math.sin(a) * d * 0.85;
+        const rx = 2 + r() * 3;
+        const ry = 4 + r() * 4;
+        const rot = r() * 360;
+        const fill = LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)];
+        const opacity = 0.7 + r() * 0.3;
+        const delay = 0.25 + r() * 0.8;
+        out.push({ cx: lx, cy: ly, rx, ry, rot, fill, opacity, delay });
+      }
+    }
+    return out;
+  }, []);
+
+  // A handful of falling / drifting leaves
+  const falling = useMemo<Leaf[]>(() => {
+    const r = rng(7);
+    const out: Leaf[] = [];
+    for (let i = 0; i < 14; i++) {
+      out.push({
+        cx: 40 + r() * 220,
+        cy: 180 + r() * 60,
+        rx: 2 + r() * 2,
+        ry: 4 + r() * 2,
+        rot: r() * 360,
+        fill: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)],
+        opacity: 0.55 + r() * 0.35,
+        delay: 0.6 + r() * 1.2,
+      });
+    }
+    return out;
+  }, []);
+
   return (
     <motion.svg
-      initial={{ opacity: 0, scale: 0.92, y: 10 }}
+      initial={{ opacity: 0, scale: 0.94, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
       width={size}
       height={size}
-      viewBox="0 0 280 280"
+      viewBox="0 0 320 320"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="select-none drop-shadow-[0_8px_32px_rgba(255,107,53,0.25)]"
+      className="select-none drop-shadow-[0_18px_40px_rgba(255,107,53,0.18)]"
     >
       <defs>
-        <radialGradient id="bowl" cx="50%" cy="40%" r="60%">
+        <radialGradient id="bowl-top" cx="50%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="80%" stopColor="#e9e9ec" />
-          <stop offset="100%" stopColor="#cfcfd3" />
+          <stop offset="55%" stopColor="#eeeef1" />
+          <stop offset="100%" stopColor="#c7c7cc" />
         </radialGradient>
-        <linearGradient id="trunk" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ff8a5b" />
-          <stop offset="100%" stopColor="#e85826" />
+        <linearGradient id="bowl-rim" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#dcdce0" />
         </linearGradient>
+        <linearGradient id="trunk" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stopColor="#ff9466" />
+          <stop offset="55%" stopColor="#e85826" />
+          <stop offset="100%" stopColor="#b43a10" />
+        </linearGradient>
+        <radialGradient id="leaf-glow" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stopColor="#ffe7d4" stopOpacity="0.7" />
+          <stop offset="70%" stopColor="#ffe7d4" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
-      {/* Bowl */}
-      <ellipse cx="140" cy="230" rx="110" ry="22" fill="#d8d8dc" opacity="0.5" />
-      <path
-        d="M50 210 Q 140 295 230 210 Q 200 240 140 240 Q 80 240 50 210 Z"
-        fill="url(#bowl)"
-      />
+      {/* Soft ground shadow */}
+      <ellipse cx="160" cy="272" rx="120" ry="10" fill="#1a1a1a" opacity="0.08" />
 
-      {/* Trunk */}
-      <path
-        d="M140 220 Q 110 180 115 150 Q 120 120 160 105 Q 175 100 170 90"
+      {/* Bowl */}
+      <motion.g
+        initial={{ y: 8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        <path
+          d="M60 238 Q 160 310 260 238 Q 235 270 160 270 Q 85 270 60 238 Z"
+          fill="url(#bowl-top)"
+        />
+        <path
+          d="M60 238 Q 160 210 260 238 L 255 240 Q 160 214 65 240 Z"
+          fill="url(#bowl-rim)"
+        />
+        <path
+          d="M75 245 Q 160 227 245 245"
+          stroke="#ffffff"
+          strokeOpacity="0.7"
+          strokeWidth="1.2"
+          fill="none"
+        />
+      </motion.g>
+
+      {/* Crown glow behind leaves */}
+      <circle cx="180" cy="90" r="115" fill="url(#leaf-glow)" />
+
+      {/* Trunk — main curve */}
+      <motion.path
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+        d="M160 248
+           C 150 225, 135 205, 130 185
+           C 126 165, 138 148, 156 135
+           C 174 122, 190 108, 192 88"
         stroke="url(#trunk)"
         strokeWidth="14"
         strokeLinecap="round"
         fill="none"
       />
+      {/* Trunk — highlight for depth */}
+      <motion.path
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 0.55 }}
+        transition={{ duration: 1.1, delay: 0.1 }}
+        d="M160 248
+           C 150 225, 135 205, 130 185
+           C 126 165, 138 148, 156 135
+           C 174 122, 190 108, 192 88"
+        stroke="#ffd1b8"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+        transform="translate(-3 -1)"
+      />
 
       {/* Branches */}
-      <g stroke="#e85826" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9">
-        <path d="M150 120 Q 170 110 185 95" />
-        <path d="M135 140 Q 115 130 95 115" />
-        <path d="M155 100 Q 175 85 195 75" />
-        <path d="M165 95 Q 150 75 135 60" />
-      </g>
+      <motion.g
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+        stroke="url(#trunk)"
+        strokeLinecap="round"
+        fill="none"
+      >
+        <path d="M152 150 Q 130 142 108 138" strokeWidth="4" />
+        <path d="M108 138 Q 92 134 78 128" strokeWidth="3" />
+        <path d="M108 138 Q 100 124 92 112" strokeWidth="2.5" />
+
+        <path d="M175 120 Q 200 112 222 106" strokeWidth="4" />
+        <path d="M222 106 Q 240 102 252 94" strokeWidth="3" />
+        <path d="M222 106 Q 228 92 232 78" strokeWidth="2.5" />
+
+        <path d="M185 95 Q 200 82 212 68" strokeWidth="3" />
+        <path d="M170 105 Q 158 88 150 72" strokeWidth="3" />
+        <path d="M145 160 Q 125 170 108 178" strokeWidth="2.5" />
+        <path d="M165 135 Q 185 128 200 122" strokeWidth="2" />
+      </motion.g>
 
       {/* Leaves */}
-      {Array.from({ length: 48 }).map((_, i) => {
-        const seed = i * 137.5;
-        const r = 55 + (i % 5) * 8;
-        const angle = (seed * Math.PI) / 180;
-        const cx = 160 + Math.cos(angle) * r * 0.6;
-        const cy = 80 - Math.sin(angle) * r * 0.55;
-        return (
+      <g>
+        {leaves.map((l, i) => (
           <motion.ellipse
-            key={i}
-            cx={cx}
-            cy={cy}
-            rx={3 + (i % 3)}
-            ry={5 + (i % 3)}
-            fill="#ff6b35"
-            opacity={0.55 + ((i * 17) % 40) / 100}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            key={`l-${i}`}
+            cx={l.cx}
+            cy={l.cy}
+            rx={l.rx}
+            ry={l.ry}
+            fill={l.fill}
+            opacity={l.opacity}
+            transform={`rotate(${l.rot} ${l.cx} ${l.cy})`}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: l.opacity }}
             transition={{
-              delay: 0.3 + i * 0.015,
-              duration: 0.6,
+              delay: l.delay,
+              duration: 0.5,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          />
+        ))}
+      </g>
+
+      {/* Falling / drifting leaves */}
+      <g>
+        {falling.map((l, i) => (
+          <motion.ellipse
+            key={`f-${i}`}
+            cx={l.cx}
+            cy={l.cy}
+            rx={l.rx}
+            ry={l.ry}
+            fill={l.fill}
+            opacity={l.opacity}
+            initial={{
+              y: -40,
+              opacity: 0,
+              rotate: l.rot,
+            }}
+            animate={{
+              y: 0,
+              opacity: l.opacity,
+              rotate: l.rot + 35,
+            }}
+            transition={{
+              delay: l.delay,
+              duration: 1.4,
               ease: "easeOut",
             }}
-            transform={`rotate(${seed % 90} ${cx} ${cy})`}
           />
-        );
-      })}
+        ))}
+      </g>
     </motion.svg>
   );
 }
